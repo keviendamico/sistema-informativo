@@ -1,10 +1,107 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Timesheet — Sistema Informativo REXtart</title>
-</head>
+<html lang="it"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::main})}">
+<head><title>Timesheet</title></head>
 <body>
-    <h1>Work in progress</h1>
+<main>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Timesheet</h4>
+        <form th:action="@{/timesheet/new}" method="post">
+            <button type="submit" class="btn btn-rxt btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>Nuovo timesheet
+            </button>
+        </form>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Utente</th>
+                        <th>Periodo</th>
+                        <th>Stato</th>
+                        <th class="text-end">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(timesheets)}">
+                        <td colspan="4" class="text-center text-muted py-4">
+                            Nessun timesheet trovato.
+                        </td>
+                    </tr>
+                    <tr th:each="ts : ${timesheets}">
+                        <td th:text="${ts.user.firstName + ' ' + ts.user.lastName}"></td>
+                        <td th:text="${T(java.time.Month).of(ts.month)
+                                        .getDisplayName(T(java.time.format.TextStyle).FULL,
+                                                        new java.util.Locale('it'))
+                                        .substring(0,1).toUpperCase()
+                                        +
+                                        T(java.time.Month).of(ts.month)
+                                        .getDisplayName(T(java.time.format.TextStyle).FULL,
+                                                        new java.util.Locale('it'))
+                                        .substring(1)
+                                        + ' ' + ts.year}">
+                        </td>
+                        <td>
+                            <span th:switch="${ts.status.name()}">
+                                <span th:case="'DRAFT'"     class="badge bg-secondary">Bozza</span>
+                                <span th:case="'PENDING'"   class="badge bg-warning text-dark">In validazione</span>
+                                <span th:case="'APPROVED'"  class="badge bg-success">Approvato</span>
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <!-- Edit — solo DRAFT -->
+                            <a th:if="${ts.status.name() == 'DRAFT'}"
+                               th:href="@{/timesheet/{id}/edit(id=${ts.id})}"
+                               class="btn btn-sm btn-outline-secondary me-1"
+                               data-bs-toggle="tooltip" title="Modifica">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <!-- Manda in validazione — solo DRAFT -->
+                            <form th:if="${ts.status.name() == 'DRAFT'}"
+                                  th:action="@{/timesheet/{id}/submit(id=${ts.id})}"
+                                  method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary me-1"
+                                        data-bs-toggle="tooltip" title="Manda in validazione">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </form>
+                            <!-- Dettaglio — PENDING / APPROVED -->
+                            <a th:if="${ts.status.name() != 'DRAFT'}"
+                               th:href="@{/timesheet/{id}/detail(id=${ts.id})}"
+                               class="btn btn-sm btn-outline-secondary me-1"
+                               data-bs-toggle="tooltip" title="Dettaglio">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <!-- Approva — solo ADMIN e PENDING -->
+                            <form th:if="${isAdmin and ts.status.name() == 'PENDING'}"
+                                  th:action="@{/admin/timesheet/{id}/approve(id=${ts.id})}"
+                                  method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-success"
+                                        data-bs-toggle="tooltip" title="Approva">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
 </body>
 </html>

@@ -44,7 +44,20 @@ CREATE TABLE IF NOT EXISTS timesheet_rows (
     timesheet_id BIGINT       NOT NULL REFERENCES timesheets(id) ON DELETE CASCADE,
     project_id   BIGINT       NOT NULL REFERENCES projects(id),
     day          SMALLINT     NOT NULL CHECK (day BETWEEN 1 AND 31),
-    hours        NUMERIC(4,2) NOT NULL DEFAULT 0 CHECK (hours >= 0 AND hours <= 24)
+    hours        SMALLINT     NOT NULL DEFAULT 0 CHECK (hours >= 0 AND hours <= 24)
 );
 
--- L'utente admin di default viene creato al primo avvio dall'applicazione (DataInitializer).
+CREATE TABLE IF NOT EXISTS absence_types (
+    id          BIGSERIAL    PRIMARY KEY,
+    code        VARCHAR(10)  NOT NULL UNIQUE,
+    description VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS timesheet_absence_rows (
+    id              BIGSERIAL PRIMARY KEY,
+    timesheet_id    BIGINT    NOT NULL REFERENCES timesheets(id) ON DELETE CASCADE,
+    day             SMALLINT  NOT NULL CHECK (day BETWEEN 1 AND 31),
+    hours           SMALLINT  CHECK (hours >= 0 AND hours <= 24),
+    absence_type_id BIGINT    REFERENCES absence_types(id),
+    UNIQUE (timesheet_id, day)
+);

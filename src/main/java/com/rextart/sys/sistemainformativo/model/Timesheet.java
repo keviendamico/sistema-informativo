@@ -2,7 +2,6 @@ package com.rextart.sys.sistemainformativo.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,40 +11,36 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "timesheets",
+       uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "year", "month"}))
+public class Timesheet {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String username;
-
-    @Column(nullable = false, unique = true)
-    private String email;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Column(nullable = false)
-    private String passwordHash;
+    private int year;
 
     @Column(nullable = false)
-    private String firstName;
-
-    @Column(nullable = false)
-    private String lastName;
+    private int month;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role;
+    private TimesheetStatus status = TimesheetStatus.DRAFT;
 
-    @Column(nullable = false)
-    private boolean active = true;
+    @Column(columnDefinition = "TEXT")
+    private String activities;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "user_projects",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "project_id"))
-    private List<Project> projects = new ArrayList<>();
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    @OneToMany(mappedBy = "timesheet", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TimesheetRow> rows = new ArrayList<>();
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -53,5 +48,4 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
 }

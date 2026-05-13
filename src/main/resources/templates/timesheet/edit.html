@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="it"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::main})}">
+<head><title>Modifica Timesheet</title></head>
+<body>
+<main>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">
+            Timesheet —
+            <span th:text="${T(java.time.Month).of(timesheet.month)
+                            .getDisplayName(T(java.time.format.TextStyle).FULL, new java.util.Locale('it'))
+                            .substring(0,1).toUpperCase()
+                            + T(java.time.Month).of(timesheet.month)
+                            .getDisplayName(T(java.time.format.TextStyle).FULL, new java.util.Locale('it'))
+                            .substring(1)
+                            + ' ' + timesheet.year}"></span>
+        </h4>
+        <a th:href="@{/timesheet}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Indietro
+        </a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <form th:action="@{/timesheet/{id}/edit(id=${timesheet.id})}"
+          th:object="${form}" method="post">
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="ts-grid-wrapper">
+                <table class="table table-sm table-bordered mb-0 ts-grid">
+                    <thead>
+                        <tr>
+                            <th class="ts-day-col">Giorno</th>
+                            <th th:each="col, colStat : ${form.columns}">
+                                <select th:field="*{columns[__${colStat.index}__].projectId}"
+                                        class="ts-project-select form-select form-select-sm">
+                                    <option value="">—</option>
+                                    <option th:each="p : ${projects}"
+                                            th:value="${p.id}"
+                                            th:text="${p.code}">
+                                    </option>
+                                </select>
+                            </th>
+                            <th class="ts-absence-col text-center">Ore ass.</th>
+                            <th class="ts-absence-type-col">Tipo ass.</th>
+                            <th class="ts-total-col text-center">Tot</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="day, dayStat : ${#numbers.sequence(1, daysInMonth)}"
+                            th:classappend="${rowClassList[dayStat.index]}">
+
+                            <td class="ts-day-label">
+                                <span th:text="${day}"></span>
+                                <span class="text-muted"
+                                      th:text="${T(java.time.LocalDate).of(timesheet.year, timesheet.month, day)
+                                                  .getDayOfWeek()
+                                                  .getDisplayName(T(java.time.format.TextStyle).SHORT, new java.util.Locale('it'))
+                                                  .substring(0,1).toUpperCase()
+                                                  + T(java.time.LocalDate).of(timesheet.year, timesheet.month, day)
+                                                  .getDayOfWeek()
+                                                  .getDisplayName(T(java.time.format.TextStyle).SHORT, new java.util.Locale('it'))
+                                                  .substring(1)}">
+                                </span>
+                            </td>
+
+                            <td th:each="col, colStat : ${form.columns}" class="text-center">
+                                <input type="number"
+                                       th:field="*{columns[__${colStat.index}__].hours[__${dayStat.index}__]}"
+                                       class="form-control form-control-sm hours-input"
+                                       step="1" min="0" max="24" />
+                            </td>
+
+                            <td class="text-center">
+                                <input type="number"
+                                       th:field="*{absenceRows[__${dayStat.index}__].hours}"
+                                       class="form-control form-control-sm hours-input absence-hours-input"
+                                       step="1" min="0" max="24" />
+                            </td>
+                            <td>
+                                <select th:field="*{absenceRows[__${dayStat.index}__].absenceTypeId}"
+                                        class="form-select form-select-sm ts-absence-select">
+                                    <option value="">—</option>
+                                    <option th:each="at : ${absenceTypes}"
+                                            th:value="${at.id}"
+                                            th:text="${at.code + ' — ' + at.description}">
+                                    </option>
+                                </select>
+                            </td>
+                            <td class="ts-total-cell" data-row-total></td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Totale</td>
+                            <td th:each="col : ${form.columns}" data-col-total></td>
+                            <td data-absence-total></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Attività progettuali</label>
+                    <textarea th:field="*{activities}" class="form-control" rows="4"
+                              placeholder="Descrivi le attività svolte nel mese..."></textarea>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label fw-semibold">Note</label>
+                    <textarea th:field="*{notes}" class="form-control" rows="2"
+                              placeholder="Note aggiuntive..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-rxt btn-sm">
+                <i class="bi bi-floppy me-1"></i>Salva
+            </button>
+            <a th:href="@{/timesheet}" class="btn btn-outline-secondary btn-sm">Annulla</a>
+        </div>
+    </form>
+
+    <script>
+        (function () {
+            const table = document.querySelector('.ts-grid');
+            if (!table) return;
+
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            const colTotals = Array.from(table.querySelectorAll('[data-col-total]'));
+            const absenceTotal = table.querySelector('[data-absence-total]');
+
+            function recalc() {
+                colTotals.forEach(c => c.textContent = '');
+                if (absenceTotal) absenceTotal.textContent = '';
+
+                rows.forEach(row => {
+                    const projectInputs = Array.from(row.querySelectorAll('.hours-input:not(.absence-hours-input)'));
+                    const absenceInput = row.querySelector('.absence-hours-input');
+
+                    const projectSum = projectInputs.reduce((s, inp) => s + (parseInt(inp.value) || 0), 0);
+                    const absenceVal = absenceInput ? (parseInt(absenceInput.value) || 0) : 0;
+                    const rowSum = projectSum + absenceVal;
+
+                    const totalCell = row.querySelector('[data-row-total]');
+                    if (totalCell) totalCell.textContent = rowSum > 0 ? rowSum : '';
+
+                    projectInputs.forEach((inp, colIdx) => {
+                        const v = parseInt(inp.value) || 0;
+                        if (colTotals[colIdx]) {
+                            const cur = parseInt(colTotals[colIdx].textContent) || 0;
+                            colTotals[colIdx].textContent = (cur + v) || '';
+                        }
+                    });
+
+                    if (absenceTotal && absenceVal > 0) {
+                        const cur = parseInt(absenceTotal.textContent) || 0;
+                        absenceTotal.textContent = (cur + absenceVal) || '';
+                    }
+                });
+
+                colTotals.forEach(c => { if (c.textContent === '0') c.textContent = ''; });
+            }
+
+            table.addEventListener('input', recalc);
+            recalc();
+        })();
+    </script>
+
+</main>
+</body>
+</html>

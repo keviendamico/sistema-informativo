@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} + ' — Sistema Informativo REXtart'">Sistema Informativo REXtart</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/custom.css}">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg si-navbar fixed-top">
+    <div class="container-fluid px-3">
+        <a class="navbar-brand" th:href="@{/timesheet}">
+            <img th:src="@{/image/logo-rextart.svg}" alt="Rextart" height="22">
+        </a>
+        <div class="ms-auto d-flex align-items-center gap-3">
+            <span class="text-white small" sec:authentication="name"></span>
+            <a th:href="@{/logout}" class="btn btn-sm si-btn-logout">
+                <i class="bi bi-box-arrow-right"></i> Esci
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Sidebar -->
+<div class="si-sidebar">
+    <nav class="si-sidebar-nav">
+        <ul class="list-unstyled mb-0">
+            <li>
+                <a th:href="@{/timesheet}"
+                   th:classappend="${activePage == 'timesheet'} ? 'active'"
+                   class="si-sidebar-link">
+                    <i class="bi bi-calendar3"></i>
+                    <span>Timesheet</span>
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/templates}"
+                   th:classappend="${activePage == 'templates'} ? 'active'"
+                   class="si-sidebar-link">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    <span>Template</span>
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/expenses}"
+                   th:classappend="${activePage == 'expenses'} ? 'active'"
+                   class="si-sidebar-link">
+                    <i class="bi bi-receipt"></i>
+                    <span>Note spese</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Sezione Admin -->
+        <div sec:authorize="hasRole('ADMIN')">
+            <div class="si-sidebar-section-title">Admin</div>
+            <ul class="list-unstyled mb-0">
+                <li>
+                    <a th:href="@{/admin/users}"
+                       th:classappend="${activePage == 'admin-users'} ? 'active'"
+                       class="si-sidebar-link">
+                        <i class="bi bi-people"></i>
+                        <span>Utenti</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/admin/projects}"
+                       th:classappend="${activePage == 'admin-projects'} ? 'active'"
+                       class="si-sidebar-link">
+                        <i class="bi bi-briefcase"></i>
+                        <span>Commesse</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>
+
+<!-- Contenuto principale -->
+<main class="si-main-content">
+    <div th:replace="${content}"></div>
+</main>
+
+<script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script>
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        new bootstrap.Tooltip(el);
+    });
+</script>
+</body>
+</html>
