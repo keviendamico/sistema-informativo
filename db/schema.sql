@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
     id            BIGSERIAL    PRIMARY KEY,
+    username      VARCHAR(100) NOT NULL UNIQUE,
     email         VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     first_name    VARCHAR(100) NOT NULL,
@@ -46,12 +47,4 @@ CREATE TABLE IF NOT EXISTS timesheet_rows (
     hours        NUMERIC(4,2) NOT NULL DEFAULT 0 CHECK (hours >= 0 AND hours <= 24)
 );
 
-INSERT INTO users (email, password_hash, first_name, last_name, role, active)
-VALUES (
-    'admin@rextart.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', -- admin123
-    'Admin',
-    'Rextart',
-    'ADMIN',
-    TRUE
-) ON CONFLICT (email) DO NOTHING;
+-- L'utente admin di default viene creato al primo avvio dall'applicazione (DataInitializer).

@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;700&display=swap');
+
+/* ===== Variables ===== */
+:root {
+    --rxt-blue:       #0f65a2;
+    --rxt-blue-dark:  #053d65;
+    --rxt-teal:       #3cbfb5;
+    --rxt-orange:     #fd8c25;
+    --rxt-mint:       #dcfff7;
+    --rxt-text:       #333;
+}
+
+body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--rxt-text);
+    background-color: white;
+}
+
+/* ===== Login page ===== */
+.login-page {
+    min-height: 100vh;
+    background-color: #f4f6f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 50%;
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+}
+
+.login-header {
+    background-color: var(--rxt-blue);
+    color: #fff;
+    border-radius: 4px 4px 0 0;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.login-header img {
+    height: 28px;
+    width: auto;
+}
+
+.login-header .login-subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--rxt-teal);
+    margin-top: 0.5rem;
+    font-weight: 700;
+}
+
+/* ===== Buttons ===== */
+.btn-rxt {
+    background-color: var(--rxt-blue);
+    border-color: var(--rxt-blue);
+    color: #fff;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: background-color .2s, border-color .2s;
+}
+
+.btn-rxt:hover {
+    background-color: var(--rxt-blue-dark);
+    border-color: var(--rxt-blue-dark);
+    color: #fff;
+}

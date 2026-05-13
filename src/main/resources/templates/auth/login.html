@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Sistema Informativo REXtart</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/custom.css}">
+</head>
+<body class="login-page">
+
+<div class="login-card card">
+    <div class="login-header">
+        <img th:src="@{/image/logo-rextart.svg}" alt="REXtart">
+        <p class="login-subtitle mb-0">Sistema Informativo</p>
+    </div>
+    <div class="card-body p-5">
+
+        <div th:if="${param.error}" class="alert alert-danger py-2 small" role="alert">
+            Credenziali non valide. Riprovare.
+        </div>
+        <div th:if="${param.logout}" class="alert alert-success py-2 small" role="alert">
+            Logout effettuato con successo.
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="mb-4">
+                <label for="username" class="form-label small fw-semibold">Username</label>
+                <input type="text" id="username" name="username"
+                       class="form-control form-control-lg" autocomplete="username" required autofocus>
+            </div>
+            <div class="mb-5">
+                <label for="password" class="form-label small fw-semibold">Password</label>
+                <input type="password" id="password" name="password"
+                       class="form-control form-control-lg" autocomplete="current-password" required>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-rxt btn-lg fw-semibold">Accedi</button>
+            </div>
+        </form>
+
+        <hr class="my-4">
+
+        <p class="text-muted small mb-0" style="font-size: 0.72rem;">
+            <strong>Attenzione</strong> — L'accesso al Sistema Informativo è riservato esclusivamente
+            a dipendenti e collaboratori di Rextart S.r.l. autorizzati. Ogni accesso è registrato.
+            L'uso non autorizzato è vietato e perseguibile ai sensi di legge.
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
