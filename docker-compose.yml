@@ -1,0 +1,15 @@
+services:
+  rextart-db:
+    container_name: rextart-db
+    image: postgres:14.22
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: rextart_db
+    volumes:
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - rextart-db-data:/var/lib/postgresql/data
+volumes:
+  rextart-db-data:
