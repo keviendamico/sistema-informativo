@@ -116,8 +116,7 @@ public class TimesheetPdfService {
         Font fCell = font(6.5f, Font.NORMAL);
         Font fTot  = font(6.5f, Font.BOLD);
 
-        final int N = 10; // colonne commessa sempre fisse a 10
-        // pad con null per gli slot vuoti
+        final int N = 10;
         List<Project> cols = new ArrayList<>(projects);
         while (cols.size() < N) cols.add(null);
 
@@ -157,11 +156,10 @@ public class TimesheetPdfService {
             table.addCell(h);
         }
 
-        // -- header row 2: codici commessa (vuoto se slot libero) --
+        // -- header row 2: project codes (empty if void slot) --
         for (Project p : cols)
             table.addCell(brd(p != null ? p.getCode() : "", fHdr, Element.ALIGN_CENTER, BG_HEADER));
 
-        // -- righe giorno --
         int[] colTotals = new int[N];
         int absTotal = 0, presTotal = 0;
 
@@ -190,7 +188,7 @@ public class TimesheetPdfService {
             table.addCell(brd(String.valueOf(tot), fCell, Element.ALIGN_CENTER, null));
         }
 
-        // -- riga totale footer --
+        // -- tot --
         table.addCell(brd("T", fTot, Element.ALIGN_CENTER, BG_HEADER));
         for (int ci = 0; ci < N; ci++)
             table.addCell(brd(colTotals[ci] > 0 ? String.valueOf(colTotals[ci]) : "", fTot, Element.ALIGN_CENTER, BG_HEADER));
