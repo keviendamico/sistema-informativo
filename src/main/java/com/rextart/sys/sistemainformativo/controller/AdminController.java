@@ -1,7 +1,10 @@
 package com.rextart.sys.sistemainformativo.controller;
 
+import com.rextart.sys.sistemainformativo.model.dto.UserFormDto;
+import com.rextart.sys.sistemainformativo.repository.ProjectRepository;
 import com.rextart.sys.sistemainformativo.service.DocumentTemplateService;
 import com.rextart.sys.sistemainformativo.service.TimesheetService;
+import com.rextart.sys.sistemainformativo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -9,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,12 +28,63 @@ public class AdminController {
 
     private final TimesheetService timesheetService;
     private final DocumentTemplateService documentTemplateService;
-
+    private final UserService userService;
+    private final ProjectRepository projectRepository;
+    
     @GetMapping("/users")
     public String users(Model model) {
+        model.addAttribute("users", userService.findAll());
         model.addAttribute("pageTitle", "Utenti");
         model.addAttribute("activePage", "admin-users");
         return "admin/users";
+    }
+
+    @GetMapping("/users/new")
+    public String newUserForm(Model model) {
+        model.addAttribute("form", new UserFormDto());
+        model.addAttribute("allProjects", projectRepository.findByActiveTrue());
+        model.addAttribute("isEdit", false);
+        model.addAttribute("pageTitle", "Nuovo utente");
+        model.addAttribute("activePage", "admin-users");
+        return "admin/user-form";
+    }
+
+    @PostMapping("/users")
+    public String createUser(@ModelAttribute("form") UserFormDto form, RedirectAttributes ra) {
+        try {
+            userService.create(form);
+            ra.addFlashAttribute("success", "Utente creato con successo.");
+            return "redirect:/admin/users";
+        } catch (Exception e) {
+            log.warn("User creation failed: {}", e.getMessage());
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/admin/users/new";
+        }
+    }
+
+    @GetMapping("/users/{id}/edit")
+    public String editUserForm(@PathVariable Long id, Model model) {
+        model.addAttribute("form", userService.toForm(userService.getById(id)));
+        model.addAttribute("userId", id);
+        model.addAttribute("allProjects", projectRepository.findByActiveTrue());
+        model.addAttribute("isEdit", true);
+        model.addAttribute("pageTitle", "Modifica utente");
+        model.addAttribute("activePage", "admin-users");
+        return "admin/user-form";
+    }
+
+    @PostMapping("/users/{id}")
+    public String updateUser(@PathVariable Long id,
+                             @ModelAttribute("form") UserFormDto form,
+                             RedirectAttributes ra) {
+        try {
+            userService.update(id, form);
+            ra.addFlashAttribute("success", "Utente aggiornato.");
+        } catch (Exception e) {
+            log.warn("User update failed for {}: {}", id, e.getMessage());
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/users";
     }
 
     @GetMapping("/projects")
