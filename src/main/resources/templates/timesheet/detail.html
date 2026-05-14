@@ -1,12 +1,124 @@
 <!DOCTYPE html>
 <html lang="it"
       xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout/base :: layout(~{::main})}">
 <head><title>Dettaglio Timesheet</title></head>
 <body>
 <main>
-    <h4 class="mb-4">Dettaglio Timesheet</h4>
-    <p class="text-muted">Work in progress.</p>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">
+            Timesheet —
+            <span th:text="${T(java.time.Month).of(timesheet.month)
+                            .getDisplayName(T(java.time.format.TextStyle).FULL, new java.util.Locale('it'))
+                            .substring(0,1).toUpperCase()
+                            + T(java.time.Month).of(timesheet.month)
+                            .getDisplayName(T(java.time.format.TextStyle).FULL, new java.util.Locale('it'))
+                            .substring(1)
+                            + ' ' + timesheet.year}"></span>
+        </h4>
+        <div class="d-flex align-items-center gap-2">
+            <span th:switch="${timesheet.status.name()}" class="me-5">
+                <span th:case="'DRAFT'"    class="badge bg-secondary">Bozza</span>
+                <span th:case="'PENDING'"  class="badge bg-warning text-dark">In validazione</span>
+                <span th:case="'APPROVED'" class="badge bg-success">Approvato</span>
+            </span>
+            <form th:if="${isAdmin and timesheet.status.name() == 'PENDING'}"
+                  th:action="@{/admin/timesheet/{id}/approve(id=${timesheet.id})}"
+                  method="post" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-check-circle me-1"></i>Approva
+                </button>
+            </form>
+            <a th:if="${timesheet.status.name() == 'APPROVED'}"
+               th:href="@{/timesheet/{id}/pdf(id=${timesheet.id})}"
+               class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-filetype-pdf me-1"></i>Scarica PDF
+            </a>
+            <a th:href="@{/timesheet}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Indietro
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="ts-grid-wrapper">
+            <table class="table table-sm table-bordered mb-0 ts-grid">
+                <thead>
+                    <tr>
+                        <th class="ts-day-col">Giorno</th>
+                        <th th:each="code : ${columnCodes}" class="text-center" th:text="${code}"></th>
+                        <th class="ts-absence-col text-center">Ore ass.</th>
+                        <th class="ts-absence-type-col">Tipo ass.</th>
+                        <th class="ts-total-col text-center">Tot</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="day, dayStat : ${#numbers.sequence(1, daysInMonth)}"
+                        th:classappend="${rowClassList[dayStat.index]}">
+
+                        <td class="ts-day-label">
+                            <span th:text="${day}"></span>
+                            <span class="text-muted"
+                                  th:text="${T(java.time.LocalDate).of(timesheet.year, timesheet.month, day)
+                                              .getDayOfWeek()
+                                              .getDisplayName(T(java.time.format.TextStyle).SHORT, new java.util.Locale('it'))
+                                              .substring(0,1).toUpperCase()
+                                              + T(java.time.LocalDate).of(timesheet.year, timesheet.month, day)
+                                              .getDayOfWeek()
+                                              .getDisplayName(T(java.time.format.TextStyle).SHORT, new java.util.Locale('it'))
+                                              .substring(1)}">
+                            </span>
+                        </td>
+
+                        <td th:each="col : ${activeColumns}" class="text-center">
+                            <span th:with="h=${col.hours[dayStat.index]}"
+                                  th:text="${h != null and h > 0 ? h : ''}"></span>
+                        </td>
+
+                        <td class="text-center">
+                            <span th:with="h=${form.absenceRows[dayStat.index].hours}"
+                                  th:text="${h != null and h > 0 ? h : ''}"></span>
+                        </td>
+                        <td>
+                            <span th:if="${form.absenceRows[dayStat.index].absenceTypeId != null}"
+                                  th:text="${absenceCodeMap[form.absenceRows[dayStat.index].absenceTypeId]}"></span>
+                        </td>
+                        <td class="text-center">
+                            <span th:with="t=${rowTotals[dayStat.index]}"
+                                  th:text="${t != null and t > 0 ? t : ''}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="fw-semibold">
+                        <td>Totale</td>
+                        <td th:each="t : ${columnTotals}" class="text-center"
+                            th:text="${t > 0 ? t : ''}"></td>
+                        <td class="text-center" th:text="${absenceTotal > 0 ? absenceTotal : ''}"></td>
+                        <td></td>
+                        <td class="text-center" th:text="${grandTotal > 0 ? grandTotal : ''}"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4"
+         th:if="${!#strings.isEmpty(timesheet.activities) or !#strings.isEmpty(timesheet.notes)}">
+        <div class="card-body">
+            <div class="mb-3" th:if="${!#strings.isEmpty(timesheet.activities)}">
+                <div class="fw-semibold mb-1">Attività progettuali</div>
+                <p class="mb-0 text-muted" style="white-space: pre-wrap;" th:text="${timesheet.activities}"></p>
+            </div>
+            <div th:if="${!#strings.isEmpty(timesheet.notes)}">
+                <div class="fw-semibold mb-1">Note</div>
+                <p class="mb-0 text-muted" style="white-space: pre-wrap;" th:text="${timesheet.notes}"></p>
+            </div>
+        </div>
+    </div>
+
 </main>
 </body>
 </html>

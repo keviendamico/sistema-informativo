@@ -187,21 +187,25 @@ public class TimesheetService {
             throw new IllegalStateException("Only DRAFT timesheets can be submitted.");
         }
         ts.setStatus(TimesheetStatus.PENDING);
+        ts.setSubmittedAt(java.time.LocalDateTime.now());
         timesheetRepository.save(ts);
         log.info("Timesheet {} submitted by user '{}'", timesheetId, principal.getUsername());
     }
 
     @Transactional
-    public void approve(Long timesheetId) {
+    public void approve(Long timesheetId, UserDetails principal) {
         Timesheet ts = timesheetRepository.findById(timesheetId)
                 .orElseThrow(() -> new IllegalArgumentException("Timesheet not found"));
 
         if (ts.getStatus() != TimesheetStatus.PENDING) {
             throw new IllegalStateException("Only PENDING timesheets can be approved.");
         }
+        User approver = loadUser(principal);
         ts.setStatus(TimesheetStatus.APPROVED);
+        ts.setValidatedBy(approver);
+        ts.setValidatedAt(java.time.LocalDateTime.now());
         timesheetRepository.save(ts);
-        log.info("Timesheet {} approved", timesheetId);
+        log.info("Timesheet {} approved by '{}'", timesheetId, principal.getUsername());
     }
 
     private void checkOwnership(Timesheet ts, UserDetails principal) {

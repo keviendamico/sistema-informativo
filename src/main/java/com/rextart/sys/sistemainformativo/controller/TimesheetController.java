@@ -3,9 +3,11 @@ package com.rextart.sys.sistemainformativo.controller;
 import com.rextart.sys.sistemainformativo.model.DayType;
 import com.rextart.sys.sistemainformativo.model.Timesheet;
 import com.rextart.sys.sistemainformativo.model.TimesheetStatus;
+import com.rextart.sys.sistemainformativo.model.dto.ProjectColumnDto;
 import com.rextart.sys.sistemainformativo.model.dto.TimesheetFormDto;
 import com.rextart.sys.sistemainformativo.repository.AbsenceTypeRepository;
 import com.rextart.sys.sistemainformativo.repository.ProjectRepository;
+import com.rextart.sys.sistemainformativo.service.TimesheetPdfService;
 import com.rextart.sys.sistemainformativo.service.TimesheetService;
 import com.rextart.sys.sistemainformativo.util.ItalianHolidayUtil;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +22,17 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Controller
@@ -34,6 +41,7 @@ import java.util.List;
 public class TimesheetController {
 
     private final TimesheetService timesheetService;
+    private final TimesheetPdfService timesheetPdfService;
     private final ProjectRepository projectRepository;
     private final AbsenceTypeRepository absenceTypeRepository;
 
@@ -81,19 +89,10 @@ public class TimesheetController {
         TimesheetFormDto form = timesheetService.buildEditForm(ts);
 
         YearMonth ym = YearMonth.of(ts.getYear(), ts.getMonth());
-        List<String> rowClassList = new ArrayList<>();
-        for (int d = 1; d <= ym.lengthOfMonth(); d++) {
-            DayType dt = ItalianHolidayUtil.getDayType(LocalDate.of(ts.getYear(), ts.getMonth(), d));
-            rowClassList.add(switch (dt) {
-                case SATURDAY -> "ts-row-saturday";
-                case HOLIDAY  -> "ts-row-holiday";
-                default       -> "";
-            });
-        }
 
         model.addAttribute("timesheet", ts);
         model.addAttribute("form", form);
-        model.addAttribute("rowClassList", rowClassList);
+        model.addAttribute("rowClassList", buildRowClassList(ts.getYear(), ts.getMonth(), ym.lengthOfMonth()));
         model.addAttribute("projects", projectRepository.findByActiveTrue());
         model.addAttribute("absenceTypes", absenceTypeRepository.findAllByOrderByCodeAsc());
         model.addAttribute("daysInMonth", ym.lengthOfMonth());
@@ -135,9 +134,65 @@ public class TimesheetController {
                          @AuthenticationPrincipal UserDetails principal,
                          Model model) {
         Timesheet ts = timesheetService.getById(id, principal);
+        TimesheetFormDto form = timesheetService.buildEditForm(ts);
+
+        YearMonth ym = YearMonth.of(ts.getYear(), ts.getMonth());
+        int daysInMonth = ym.lengthOfMonth();
+
+        List<ProjectColumnDto> activeColumns = form.getColumns();
+
+        List<String> columnCodes = activeColumns.stream()
+                .map(c -> c.getProjectId() == null ? "—"
+                        : projectRepository.findById(c.getProjectId())
+                                .map(p -> p.getCode())
+                                .orElse("?"))
+                .toList();
+
+        Map<Long, String> absenceCodeMap = absenceTypeRepository.findAllByOrderByCodeAsc().stream()
+                .collect(Collectors.toMap(at -> at.getId(), at -> at.getCode()));
+
+        List<Integer> columnTotals = activeColumns.stream()
+                .map(c -> c.getHours().stream()
+                        .filter(h -> h != null)
+                        .mapToInt(Integer::intValue)
+                        .sum())
+                .toList();
+
+        List<Integer> rowTotals = new ArrayList<>();
+        int absenceTotal = 0;
+        for (int i = 0; i < daysInMonth; i++) {
+            int sum = 0;
+            for (ProjectColumnDto col : activeColumns) {
+                Integer h = col.getHours().get(i);
+                if (h != null) sum += h;
+            }
+            Integer absH = form.getAbsenceRows().get(i).getHours();
+            if (absH != null) {
+                sum += absH;
+                absenceTotal += absH;
+            }
+            rowTotals.add(sum);
+        }
+        int grandTotal = columnTotals.stream().mapToInt(Integer::intValue).sum() + absenceTotal;
+
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+
         model.addAttribute("timesheet", ts);
+        model.addAttribute("form", form);
+        model.addAttribute("activeColumns", activeColumns);
+        model.addAttribute("columnCodes", columnCodes);
+        model.addAttribute("absenceCodeMap", absenceCodeMap);
+        model.addAttribute("rowClassList", buildRowClassList(ts.getYear(), ts.getMonth(), daysInMonth));
+        model.addAttribute("columnTotals", columnTotals);
+        model.addAttribute("rowTotals", rowTotals);
+        model.addAttribute("absenceTotal", absenceTotal);
+        model.addAttribute("grandTotal", grandTotal);
+        model.addAttribute("daysInMonth", daysInMonth);
+        model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("pageTitle", "Dettaglio Timesheet");
         model.addAttribute("activePage", "timesheet");
+        log.debug("Detail loaded for timesheet {}", id);
         return "timesheet/detail";
     }
 
@@ -154,5 +209,32 @@ public class TimesheetController {
             ra.addFlashAttribute("error", "Operazione non consentita.");
         }
         return "redirect:/timesheet";
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id,
+                                              @AuthenticationPrincipal UserDetails principal) throws Exception {
+        Timesheet ts = timesheetService.getById(id, principal);
+        byte[] pdf = timesheetPdfService.generatePdf(ts);
+        String filename = String.format("timesheet_%d_%02d_%s.pdf",
+                ts.getYear(), ts.getMonth(), ts.getUser().getUsername());
+        log.info("Requested PDF download for timesheet {} from '{}'", id, principal.getUsername());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    private List<String> buildRowClassList(int year, int month, int daysInMonth) {
+        List<String> list = new ArrayList<>();
+        for (int d = 1; d <= daysInMonth; d++) {
+            DayType dt = ItalianHolidayUtil.getDayType(LocalDate.of(year, month, d));
+            list.add(switch (dt) {
+                case SATURDAY -> "ts-row-saturday";
+                case HOLIDAY  -> "ts-row-holiday";
+                default       -> "";
+            });
+        }
+        return list;
     }
 }

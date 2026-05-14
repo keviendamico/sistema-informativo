@@ -3,6 +3,8 @@ package com.rextart.sys.sistemainformativo.controller;
 import com.rextart.sys.sistemainformativo.service.TimesheetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,10 +36,12 @@ public class AdminController {
     }
 
     @PostMapping("/timesheet/{id}/approve")
-    public String approve(@PathVariable Long id, RedirectAttributes ra) {
+    public String approve(@PathVariable Long id,
+                          @AuthenticationPrincipal UserDetails principal,
+                          RedirectAttributes ra) {
         try {
-            timesheetService.approve(id);
-            log.info("Timesheet {} approved", id);
+            timesheetService.approve(id, principal);
+            log.info("Timesheet {} approved by '{}'", id, principal.getUsername());
             ra.addFlashAttribute("success", "Timesheet approvato.");
         } catch (Exception e) {
             log.warn("Approve failed for timesheet {}: {}", id, e.getMessage());

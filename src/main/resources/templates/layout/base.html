@@ -21,9 +21,11 @@
         </a>
         <div class="ms-auto d-flex align-items-center gap-3">
             <span class="text-white small" sec:authentication="name"></span>
-            <a th:href="@{/logout}" class="btn btn-sm si-btn-logout">
-                <i class="bi bi-box-arrow-right"></i> Esci
-            </a>
+            <form th:action="@{/logout}" method="post" class="d-inline m-0">
+                <button type="submit" class="btn btn-sm si-btn-logout">
+                    <i class="bi bi-box-arrow-right"></i> Esci
+                </button>
+            </form>
         </div>
     </div>
 </nav>

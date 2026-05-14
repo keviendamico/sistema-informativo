@@ -31,11 +31,14 @@ CREATE TABLE IF NOT EXISTS timesheets (
     user_id    BIGINT      NOT NULL REFERENCES users(id),
     year       SMALLINT    NOT NULL,
     month      SMALLINT    NOT NULL CHECK (month BETWEEN 1 AND 12),
-    status     VARCHAR(20) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'PENDING', 'APPROVED')),
-    activities TEXT,
-    notes      TEXT,
-    created_at TIMESTAMP   NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP   NOT NULL DEFAULT NOW(),
+    status       VARCHAR(20) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'PENDING', 'APPROVED')),
+    activities   TEXT,
+    notes        TEXT,
+    validated_by BIGINT      REFERENCES users(id),
+    submitted_at TIMESTAMP,
+    validated_at TIMESTAMP,
+    created_at   TIMESTAMP   NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMP   NOT NULL DEFAULT NOW(),
     UNIQUE (user_id, year, month)
 );
 

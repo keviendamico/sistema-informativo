@@ -39,6 +39,13 @@ public class Timesheet {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "validated_by")
+    private User validatedBy;
+
+    private LocalDateTime submittedAt;
+    private LocalDateTime validatedAt;
+
     @OneToMany(mappedBy = "timesheet", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TimesheetRow> rows = new ArrayList<>();
 
