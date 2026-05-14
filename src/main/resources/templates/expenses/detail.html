@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="it"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::main})}">
+<head><title>Dettaglio Nota spese</title></head>
+<body>
+<main>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">
+            Nota spese —
+            <span th:text="${T(java.time.Month).of(report.month)
+                            .getDisplayName(T(java.time.format.TextStyle).FULL, new java.util.Locale('it'))
+                            .substring(0,1).toUpperCase()
+                            + T(java.time.Month).of(report.month)
+                            .getDisplayName(T(java.time.format.TextStyle).FULL, new java.util.Locale('it'))
+                            .substring(1)
+                            + ' ' + report.year}"></span>
+        </h4>
+        <div class="d-flex align-items-center gap-2">
+            <span th:switch="${report.status.name()}" class="me-5">
+                <span th:case="'DRAFT'"    class="badge bg-secondary">Bozza</span>
+                <span th:case="'PENDING'"  class="badge bg-warning text-dark">In validazione</span>
+                <span th:case="'APPROVED'" class="badge bg-success">Approvato</span>
+            </span>
+            <form th:if="${isAdmin and report.status.name() == 'PENDING'}"
+                  th:action="@{/admin/expense/{id}/approve(id=${report.id})}"
+                  method="post" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-check-circle me-1"></i>Approva
+                </button>
+            </form>
+            <a th:if="${report.status.name() == 'APPROVED'}"
+               th:href="@{/expenses/{id}/pdf(id=${report.id})}"
+               class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-filetype-pdf me-1"></i>Scarica PDF
+            </a>
+            <a th:href="@{/expenses}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Indietro
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <span class="form-label fw-semibold d-block">Commessa</span>
+                    <span th:text="${report.project != null ? report.project.code + ' — ' + report.project.description : '—'}"></span>
+                </div>
+                <div class="col-md-3">
+                    <span class="form-label fw-semibold d-block">Veicolo</span>
+                    <span th:text="${report.vehicle ?: '—'}"></span>
+                </div>
+                <div class="col-md-2">
+                    <span class="form-label fw-semibold d-block">Cilindrata (cc)</span>
+                    <span th:text="${report.engineCc ?: '—'}"></span>
+                </div>
+                <div class="col-md-2">
+                    <span class="form-label fw-semibold d-block">Targa</span>
+                    <span th:text="${report.plate ?: '—'}"></span>
+                </div>
+                <div class="col-md-2">
+                    <span class="form-label fw-semibold d-block">N° allegati fisici</span>
+                    <span th:text="${report.attachmentCount}"></span>
+                </div>
+                <div class="col-12" th:if="${report.notes}">
+                    <span class="form-label fw-semibold d-block">Note</span>
+                    <span th:text="${report.notes}"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>GG</th>
+                            <th>Km</th>
+                            <th>Tragitto</th>
+                            <th class="text-center">A/R</th>
+                            <th>Mezzo</th>
+                            <th class="text-end">Pasti (€)</th>
+                            <th class="text-end">Hotel (€)</th>
+                            <th class="text-end">Altro (€)</th>
+                            <th>Causale</th>
+                            <th>Pagamento</th>
+                            <th class="text-end">Totale (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(form.rows)}">
+                            <td colspan="11" class="text-center text-muted py-3">Nessuna riga.</td>
+                        </tr>
+                        <tr th:each="row : ${form.rows}">
+                            <td th:text="${row.day}"></td>
+                            <td th:text="${row.km ?: ''}"></td>
+                            <td th:text="${row.route ?: ''}"></td>
+                            <td class="text-center" th:text="${row.roundTrip ? 'Sì' : 'No'}"></td>
+                            <td th:text="${row.vehicleType != null ? row.vehicleType.label : ''}"></td>
+                            <td class="text-end" th:text="${row.mealAmount ?: ''}"></td>
+                            <td class="text-end" th:text="${row.accommodationAmount ?: ''}"></td>
+                            <td class="text-end" th:text="${row.otherAmount ?: ''}"></td>
+                            <td th:text="${row.description ?: ''}"></td>
+                            <td th:text="${row.paymentMethod != null ? row.paymentMethod.label : ''}"></td>
+                            <td class="text-end">
+                                <span th:with="tot=${(row.mealAmount ?: 0) + (row.accommodationAmount ?: 0) + (row.otherAmount ?: 0)}"
+                                      th:text="${tot > 0 ? tot : ''}"></span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

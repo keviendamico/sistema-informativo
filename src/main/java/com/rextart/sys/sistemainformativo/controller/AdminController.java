@@ -5,6 +5,7 @@ import com.rextart.sys.sistemainformativo.model.dto.UserFormDto;
 import com.rextart.sys.sistemainformativo.repository.ProjectRepository;
 import com.rextart.sys.sistemainformativo.service.DocumentTemplateService;
 import com.rextart.sys.sistemainformativo.service.ProjectService;
+import com.rextart.sys.sistemainformativo.service.ExpenseService;
 import com.rextart.sys.sistemainformativo.service.TimesheetService;
 import com.rextart.sys.sistemainformativo.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AdminController {
 
     private final TimesheetService timesheetService;
+    private final ExpenseService expenseService;
     private final DocumentTemplateService documentTemplateService;
     private final UserService userService;
     private final ProjectService projectService;
@@ -162,6 +164,21 @@ public class AdminController {
             ra.addFlashAttribute("error", "Operazione non consentita.");
         }
         return "redirect:/timesheet";
+    }
+
+    @PostMapping("/expense/{id}/approve")
+    public String approveExpense(@PathVariable Long id,
+                                 @AuthenticationPrincipal UserDetails principal,
+                                 RedirectAttributes ra) {
+        try {
+            expenseService.approve(id, principal);
+            log.info("Expense report {} approved by '{}'", id, principal.getUsername());
+            ra.addFlashAttribute("success", "Nota spese approvata.");
+        } catch (Exception e) {
+            log.warn("Approve failed for expense report {}: {}", id, e.getMessage());
+            ra.addFlashAttribute("error", "Operazione non consentita.");
+        }
+        return "redirect:/expenses";
     }
 
     @PostMapping("/templates")

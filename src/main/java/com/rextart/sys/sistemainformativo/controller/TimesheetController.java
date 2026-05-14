@@ -219,7 +219,7 @@ public class TimesheetController {
 
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id,
-                                              @AuthenticationPrincipal UserDetails principal) throws Exception {
+                                              @AuthenticationPrincipal UserDetails principal) {
         Timesheet ts = timesheetService.getById(id, principal);
         byte[] pdf = timesheetPdfService.generatePdf(ts);
         String filename = String.format("timesheet_%d_%02d_%s.pdf",

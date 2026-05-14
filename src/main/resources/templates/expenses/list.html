@@ -1,12 +1,106 @@
 <!DOCTYPE html>
 <html lang="it"
       xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout/base :: layout(~{::main})}">
 <head><title>Note spese</title></head>
 <body>
 <main>
-    <h4 class="mb-4">Note spese</h4>
-    <p class="text-muted">Work in progress.</p>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Note spese</h4>
+        <form th:action="@{/expenses/new}" method="post">
+            <button type="submit" class="btn btn-rxt btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>Nuova nota spese
+            </button>
+        </form>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th th:if="${isAdmin}">Utente</th>
+                        <th>Periodo</th>
+                        <th>Commessa</th>
+                        <th>Stato</th>
+                        <th class="text-end">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(reports)}">
+                        <td th:colspan="${isAdmin} ? 5 : 4" class="text-center text-muted py-4">
+                            Nessuna nota spese trovata.
+                        </td>
+                    </tr>
+                    <tr th:each="r : ${reports}">
+                        <td th:if="${isAdmin}" th:text="${r.user.firstName + ' ' + r.user.lastName}"></td>
+                        <td th:text="${T(java.time.Month).of(r.month)
+                                        .getDisplayName(T(java.time.format.TextStyle).FULL, new java.util.Locale('it'))
+                                        .substring(0,1).toUpperCase()
+                                        + T(java.time.Month).of(r.month)
+                                        .getDisplayName(T(java.time.format.TextStyle).FULL, new java.util.Locale('it'))
+                                        .substring(1)
+                                        + ' ' + r.year}">
+                        </td>
+                        <td th:text="${r.project != null ? r.project.code : '—'}"></td>
+                        <td>
+                            <span th:switch="${r.status.name()}">
+                                <span th:case="'DRAFT'"    class="badge bg-secondary">Bozza</span>
+                                <span th:case="'PENDING'"  class="badge bg-warning text-dark">In validazione</span>
+                                <span th:case="'APPROVED'" class="badge bg-success">Approvato</span>
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <!-- Edit — solo DRAFT -->
+                            <a th:if="${r.status.name() == 'DRAFT'}"
+                               th:href="@{/expenses/{id}/edit(id=${r.id})}"
+                               class="btn btn-sm btn-outline-secondary me-1"
+                               data-bs-toggle="tooltip" title="Modifica">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <!-- Manda in validazione — solo DRAFT -->
+                            <form th:if="${r.status.name() == 'DRAFT'}"
+                                  th:action="@{/expenses/{id}/submit(id=${r.id})}"
+                                  method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary me-1"
+                                        data-bs-toggle="tooltip" title="Manda in validazione">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </form>
+                            <!-- Dettaglio — PENDING / APPROVED -->
+                            <a th:if="${r.status.name() != 'DRAFT'}"
+                               th:href="@{/expenses/{id}/detail(id=${r.id})}"
+                               class="btn btn-sm btn-outline-secondary me-1"
+                               data-bs-toggle="tooltip" title="Dettaglio">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <!-- Approva — solo ADMIN e PENDING -->
+                            <form th:if="${isAdmin and r.status.name() == 'PENDING'}"
+                                  th:action="@{/admin/expense/{id}/approve(id=${r.id})}"
+                                  method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-success"
+                                        data-bs-toggle="tooltip" title="Approva">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </main>
 </body>
 </html>

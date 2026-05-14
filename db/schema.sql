@@ -70,3 +70,38 @@ CREATE TABLE IF NOT EXISTS document_templates (
     created_at   TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMP    NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS expense_reports (
+    id               BIGSERIAL    PRIMARY KEY,
+    user_id          BIGINT       NOT NULL REFERENCES users(id),
+    year             SMALLINT     NOT NULL,
+    month            SMALLINT     NOT NULL CHECK (month BETWEEN 1 AND 12),
+    status           VARCHAR(20)  NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT','PENDING','APPROVED')),
+    project_id       BIGINT       REFERENCES projects(id),
+    vehicle          VARCHAR(100),
+    engine_cc        SMALLINT,
+    plate            VARCHAR(20),
+    attachment_count SMALLINT     NOT NULL DEFAULT 0,
+    notes            TEXT,
+    validated_by     BIGINT       REFERENCES users(id),
+    submitted_at     TIMESTAMP,
+    validated_at     TIMESTAMP,
+    created_at       TIMESTAMP    NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMP    NOT NULL DEFAULT NOW(),
+    UNIQUE (user_id, year, month)
+);
+
+CREATE TABLE IF NOT EXISTS expense_rows (
+    id                   BIGSERIAL     PRIMARY KEY,
+    expense_report_id    BIGINT        NOT NULL REFERENCES expense_reports(id) ON DELETE CASCADE,
+    day                  SMALLINT      NOT NULL CHECK (day BETWEEN 1 AND 31),
+    km                   DECIMAL(8,2),
+    route                VARCHAR(500),
+    round_trip           BOOLEAN       NOT NULL DEFAULT FALSE,
+    vehicle_type         VARCHAR(10),
+    meal_amount          DECIMAL(10,2),
+    accommodation_amount DECIMAL(10,2),
+    other_amount         DECIMAL(10,2),
+    description          VARCHAR(500),
+    payment_method       VARCHAR(20)
+);

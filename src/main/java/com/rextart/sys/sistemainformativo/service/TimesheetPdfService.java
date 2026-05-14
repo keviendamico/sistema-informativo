@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -26,15 +25,12 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TimesheetPdfService {
+public class TimesheetPdfService extends PdfService{
 
     private final TimesheetRowRepository timesheetRowRepository;
     private final TimesheetAbsenceRowRepository timesheetAbsenceRowRepository;
 
-    private static final Color BG_HEADER = new Color(210, 210, 210);
-    private static final Color BLACK     = Color.BLACK;
-
-    public byte[] generatePdf(Timesheet ts) throws Exception {
+    public byte[] generatePdf(Timesheet ts) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Document doc = new Document(PageSize.A4.rotate(), 20f, 20f, 28f, 20f);
         PdfWriter.getInstance(doc, baos);
@@ -74,7 +70,7 @@ public class TimesheetPdfService {
         return baos.toByteArray();
     }
 
-    private void addPageHeader(Document doc, Timesheet ts) throws Exception {
+    private void addPageHeader(Document doc, Timesheet ts) {
         Font fSmall = font(6.5f, Font.NORMAL);
         Font fBold  = font(8f, Font.BOLD);
 
@@ -111,7 +107,7 @@ public class TimesheetPdfService {
     private void addGrid(Document doc, int days,
                          List<Project> projects,
                          Map<Long, Map<Integer, Integer>> hoursByProject,
-                         Map<Integer, Integer> absHours) throws Exception {
+                         Map<Integer, Integer> absHours) {
         Font fHdr  = font(6.5f, Font.BOLD);
         Font fCell = font(6.5f, Font.NORMAL);
         Font fTot  = font(6.5f, Font.BOLD);
@@ -199,7 +195,7 @@ public class TimesheetPdfService {
         doc.add(table);
     }
 
-    private void addSummary(Document doc, Map<Long, Map<Integer, Integer>> hoursByProject) throws Exception {
+    private void addSummary(Document doc, Map<Long, Map<Integer, Integer>> hoursByProject) {
         Font fHdr = font(7f, Font.BOLD);
 
         int presTotal = hoursByProject.values().stream()
@@ -220,7 +216,7 @@ public class TimesheetPdfService {
         doc.add(t);
     }
 
-    private void addActivitiesNotes(Document doc, Timesheet ts) throws Exception {
+    private void addActivitiesNotes(Document doc, Timesheet ts) {
         Font fLabel = font(7f, Font.BOLD);
         Font fText  = font(7f, Font.NORMAL);
 
@@ -242,7 +238,7 @@ public class TimesheetPdfService {
         doc.add(t);
     }
 
-    private void addSignatures(Document doc, Timesheet ts, YearMonth ym) throws Exception {
+    private void addSignatures(Document doc, Timesheet ts, YearMonth ym) {
         Font fHdr  = font(7f, Font.BOLD);
         Font fName = font(9f, Font.BOLD);
 
@@ -275,25 +271,5 @@ public class TimesheetPdfService {
         t.addCell(compiledCell);
 
         doc.add(t);
-    }
-
-    private Font font(float size, int style) {
-        return new Font(Font.HELVETICA, size, style);
-    }
-
-    private PdfPCell brd(String text, Font font, int align, Color bg) {
-        PdfPCell c = new PdfPCell(new Phrase(text != null ? text : "", font));
-        c.setHorizontalAlignment(align);
-        c.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        c.setPadding(2f);
-        c.setBorderColor(BLACK);
-        if (bg != null) c.setBackgroundColor(bg);
-        return c;
-    }
-
-    private PdfPCell noB(String text, Font font, int align) {
-        PdfPCell c = brd(text, font, align, null);
-        c.setBorder(Rectangle.NO_BORDER);
-        return c;
     }
 }
