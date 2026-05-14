@@ -12,6 +12,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import jakarta.validation.Valid;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,21 +53,23 @@ public class AdminController {
     }
 
     @PostMapping("/users")
-    public String createUser(@ModelAttribute("form") UserFormDto form, RedirectAttributes ra) {
-        try {
-            userService.create(form);
-            ra.addFlashAttribute("success", "Utente creato con successo.");
-            return "redirect:/admin/users";
-        } catch (Exception e) {
-            log.warn("User creation failed: {}", e.getMessage());
-            ra.addFlashAttribute("error", e.getMessage());
+    public String createUser(@Valid @ModelAttribute("form") UserFormDto form,
+                             BindingResult br, RedirectAttributes ra) {
+        if (br.hasErrors()) {
+            ra.addFlashAttribute("error", br.getAllErrors().stream()
+                    .findFirst().map(DefaultMessageSourceResolvable::getDefaultMessage).orElse("Errore di validazione."));
             return "redirect:/admin/users/new";
         }
+        userService.create(form);
+        ra.addFlashAttribute("success", "Utente creato con successo.");
+        return "redirect:/admin/users";
     }
 
     @GetMapping("/users/{id}/edit")
     public String editUserForm(@PathVariable Long id, Model model) {
-        model.addAttribute("form", userService.toForm(userService.getById(id)));
+        UserFormDto form = userService.toForm(userService.getById(id));
+        form.setUserId(id);
+        model.addAttribute("form", form);
         model.addAttribute("userId", id);
         model.addAttribute("allProjects", projectRepository.findByActiveTrue());
         model.addAttribute("isEdit", true);
@@ -75,15 +80,15 @@ public class AdminController {
 
     @PostMapping("/users/{id}")
     public String updateUser(@PathVariable Long id,
-                             @ModelAttribute("form") UserFormDto form,
-                             RedirectAttributes ra) {
-        try {
-            userService.update(id, form);
-            ra.addFlashAttribute("success", "Utente aggiornato.");
-        } catch (Exception e) {
-            log.warn("User update failed for {}: {}", id, e.getMessage());
-            ra.addFlashAttribute("error", e.getMessage());
+                             @Valid @ModelAttribute("form") UserFormDto form,
+                             BindingResult br, RedirectAttributes ra) {
+        if (br.hasErrors()) {
+            ra.addFlashAttribute("error", br.getAllErrors().stream()
+                    .findFirst().map(DefaultMessageSourceResolvable::getDefaultMessage).orElse("Errore di validazione."));
+            return "redirect:/admin/users/" + id + "/edit";
         }
+        userService.update(id, form);
+        ra.addFlashAttribute("success", "Utente aggiornato.");
         return "redirect:/admin/users";
     }
 

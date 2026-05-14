@@ -36,16 +36,6 @@ public class UserService {
 
     @Transactional
     public void create(UserFormDto form) {
-        if (!StringUtils.hasText(form.getPassword())) {
-            throw new IllegalArgumentException("La password è obbligatoria per un nuovo utente.");
-        }
-        if (userRepository.findByUsername(form.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("Username '" + form.getUsername() + "' già in uso.");
-        }
-        if (userRepository.findByEmail(form.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email '" + form.getEmail() + "' già in uso.");
-        }
-
         User user = new User();
         applyForm(user, form);
         user.setPasswordHash(passwordEncoder.encode(form.getPassword()));
@@ -56,10 +46,6 @@ public class UserService {
     @Transactional
     public void update(Long id, UserFormDto form) {
         User user = getById(id);
-
-        userRepository.findByEmail(form.getEmail())
-                .filter(u -> !u.getId().equals(id))
-                .ifPresent(u -> { throw new IllegalArgumentException("Email '" + form.getEmail() + "' already used."); });
 
         applyForm(user, form);
         if (StringUtils.hasText(form.getPassword())) {

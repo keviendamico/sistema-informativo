@@ -9,6 +9,7 @@
     <title th:text="${pageTitle} + ' — Sistema Informativo REXtart'">Sistema Informativo REXtart</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/tom-select/dist/css/tom-select.bootstrap5.min.css}">
     <link rel="stylesheet" th:href="@{/css/custom.css}">
 </head>
 <body>
@@ -107,6 +108,7 @@
 <form id="confirmModalForm" method="post" th:action="@{/}" style="display:none"></form>
 
 <script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/webjars/tom-select/dist/js/tom-select.complete.min.js}"></script>
 <script th:src="@{/js/templates.js}"></script>
 <script>
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
@@ -131,6 +133,15 @@
             form.submit();
         });
     })();
+
+    const projectSelect = document.getElementById('projectIds');
+    if (projectSelect) {
+        new TomSelect(projectSelect, {
+            plugins: ['remove_button'],
+            placeholder: 'Cerca commessa...',
+            create: false
+        });
+    }
 </script>
 </body>
 </html>
