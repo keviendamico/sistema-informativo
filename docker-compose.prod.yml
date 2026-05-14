@@ -18,7 +18,7 @@ services:
 
   rextart-app:
     container_name: rextart-app
-    build: .
+    image: kappa9/rextart-sistema-informativo:1.0.0
     ports:
       - "8080:8080"
     environment:
