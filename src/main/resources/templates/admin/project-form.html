@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="it"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::main})}">
+<head><title>Commessa</title></head>
+<body>
+<main>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0" th:text="${isEdit} ? 'Modifica commessa' : 'Nuova commessa'"></h4>
+        <a th:href="@{/admin/projects}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Indietro
+        </a>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body" style="max-width: 600px;">
+            <form th:action="${isEdit} ? @{/admin/projects/{id}(id=${form.projectId})} : @{/admin/projects}"
+                  th:object="${form}" method="post">
+                <input type="hidden" th:field="*{projectId}">
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Codice <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control text-uppercase" th:field="*{code}"
+                               th:readonly="${isEdit}" required maxlength="50"
+                               style="text-transform: uppercase;">
+                        <div th:if="${isEdit}" class="form-text">Non modificabile dopo la creazione.</div>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Descrizione</label>
+                        <input type="text" class="form-control" th:field="*{description}" maxlength="255">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-auto d-flex align-items-end pb-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" th:field="*{active}" id="activeCheck">
+                            <label class="form-check-label" for="activeCheck">Attiva</label>
+                        </div>
+                    </div>
+                    <div class="col-auto d-flex align-items-end pb-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" th:field="*{absence}" id="absenceCheck">
+                            <label class="form-check-label" for="absenceCheck">
+                                Assenza
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-auto d-flex align-items-end pb-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" th:field="*{internal}" id="internalCheck">
+                            <label class="form-check-label" for="internalCheck">
+                                Interno
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-rxt">
+                        <i class="bi bi-floppy me-1"></i>Salva
+                    </button>
+                    <a th:href="@{/admin/projects}" class="btn btn-outline-secondary">Annulla</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

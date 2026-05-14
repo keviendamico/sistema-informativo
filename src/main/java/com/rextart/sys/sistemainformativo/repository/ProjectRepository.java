@@ -6,11 +6,25 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     boolean existsByCode(String code);
+
+    @Query("""
+            SELECT p FROM Project p
+            ORDER BY
+              CASE WHEN p.absence = false AND p.internal = false THEN 0
+                   WHEN p.internal = true THEN 1
+                   ELSE 2
+              END ASC,
+              p.code ASC
+            """)
+    List<Project> findAllOrdered();
+
+    Optional<Project> findByCode(String code);
 
     // Absence dropdown in timesheet (absence=true, includes REXCCAS/REXCCFO)
     List<Project> findByAbsenceTrueAndActiveTrueOrderByCodeAsc();

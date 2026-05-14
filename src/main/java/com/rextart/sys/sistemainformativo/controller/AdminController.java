@@ -1,8 +1,10 @@
 package com.rextart.sys.sistemainformativo.controller;
 
+import com.rextart.sys.sistemainformativo.model.dto.ProjectFormDto;
 import com.rextart.sys.sistemainformativo.model.dto.UserFormDto;
 import com.rextart.sys.sistemainformativo.repository.ProjectRepository;
 import com.rextart.sys.sistemainformativo.service.DocumentTemplateService;
+import com.rextart.sys.sistemainformativo.service.ProjectService;
 import com.rextart.sys.sistemainformativo.service.TimesheetService;
 import com.rextart.sys.sistemainformativo.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class AdminController {
     private final TimesheetService timesheetService;
     private final DocumentTemplateService documentTemplateService;
     private final UserService userService;
+    private final ProjectService projectService;
     private final ProjectRepository projectRepository;
     
     @GetMapping("/users")
@@ -94,9 +97,56 @@ public class AdminController {
 
     @GetMapping("/projects")
     public String projects(Model model) {
+        model.addAttribute("projects", projectService.findAll());
         model.addAttribute("pageTitle", "Commesse");
         model.addAttribute("activePage", "admin-projects");
         return "admin/projects";
+    }
+
+    @GetMapping("/projects/new")
+    public String newProjectForm(Model model) {
+        model.addAttribute("form", new ProjectFormDto());
+        model.addAttribute("isEdit", false);
+        model.addAttribute("pageTitle", "Nuova commessa");
+        model.addAttribute("activePage", "admin-projects");
+        return "admin/project-form";
+    }
+
+    @PostMapping("/projects")
+    public String createProject(@Valid @ModelAttribute("form") ProjectFormDto form,
+                                BindingResult br, RedirectAttributes ra) {
+        if (br.hasErrors()) {
+            ra.addFlashAttribute("error", br.getAllErrors().stream()
+                    .findFirst().map(DefaultMessageSourceResolvable::getDefaultMessage).orElse("Errore di validazione."));
+            return "redirect:/admin/projects/new";
+        }
+        projectService.create(form);
+        ra.addFlashAttribute("success", "Commessa creata con successo.");
+        return "redirect:/admin/projects";
+    }
+
+    @GetMapping("/projects/{id}/edit")
+    public String editProjectForm(@PathVariable Long id, Model model) {
+        ProjectFormDto form = projectService.toForm(projectService.getById(id));
+        model.addAttribute("form", form);
+        model.addAttribute("isEdit", true);
+        model.addAttribute("pageTitle", "Modifica commessa");
+        model.addAttribute("activePage", "admin-projects");
+        return "admin/project-form";
+    }
+
+    @PostMapping("/projects/{id}")
+    public String updateProject(@PathVariable Long id,
+                                @Valid @ModelAttribute("form") ProjectFormDto form,
+                                BindingResult br, RedirectAttributes ra) {
+        if (br.hasErrors()) {
+            ra.addFlashAttribute("error", br.getAllErrors().stream()
+                    .findFirst().map(DefaultMessageSourceResolvable::getDefaultMessage).orElse("Errore di validazione."));
+            return "redirect:/admin/projects/" + id + "/edit";
+        }
+        projectService.update(id, form);
+        ra.addFlashAttribute("success", "Commessa aggiornata.");
+        return "redirect:/admin/projects";
     }
 
     @PostMapping("/timesheet/{id}/approve")
