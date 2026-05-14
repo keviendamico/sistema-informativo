@@ -2,6 +2,7 @@ package com.rextart.sys.sistemainformativo.model.dto;
 
 import com.rextart.sys.sistemainformativo.model.UserRole;
 import com.rextart.sys.sistemainformativo.model.validator.PasswordRequiredOnCreate;
+import com.rextart.sys.sistemainformativo.model.validator.PasswordsMatch;
 import com.rextart.sys.sistemainformativo.model.validator.UniqueEmail;
 import com.rextart.sys.sistemainformativo.model.validator.UniqueUsername;
 import lombok.Data;
@@ -13,6 +14,7 @@ import java.util.List;
 @UniqueUsername
 @UniqueEmail
 @PasswordRequiredOnCreate
+@PasswordsMatch
 public class UserFormDto {
     private Long userId;
     private String username;
@@ -22,5 +24,6 @@ public class UserFormDto {
     private UserRole role;
     private boolean active = true;
     private String password;
+    private String confirmPassword;
     private List<Long> projectIds = new ArrayList<>();
 }
