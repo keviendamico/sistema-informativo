@@ -64,3 +64,13 @@ CREATE TABLE IF NOT EXISTS timesheet_absence_rows (
     absence_type_id BIGINT    REFERENCES absence_types(id),
     UNIQUE (timesheet_id, day)
 );
+
+CREATE TABLE IF NOT EXISTS document_templates (
+    id           BIGSERIAL    PRIMARY KEY,
+    display_name VARCHAR(255) NOT NULL,
+    filename     VARCHAR(255) NOT NULL,
+    content_type VARCHAR(100) NOT NULL,
+    data         BYTEA        NOT NULL,
+    created_at   TIMESTAMP    NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMP    NOT NULL DEFAULT NOW()
+);

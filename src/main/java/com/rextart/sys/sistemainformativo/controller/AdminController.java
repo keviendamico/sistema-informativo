@@ -1,5 +1,6 @@
 package com.rextart.sys.sistemainformativo.controller;
 
+import com.rextart.sys.sistemainformativo.service.DocumentTemplateService;
 import com.rextart.sys.sistemainformativo.service.TimesheetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Slf4j
@@ -20,6 +23,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AdminController {
 
     private final TimesheetService timesheetService;
+    private final DocumentTemplateService documentTemplateService;
 
     @GetMapping("/users")
     public String users(Model model) {
@@ -48,5 +52,45 @@ public class AdminController {
             ra.addFlashAttribute("error", "Operazione non consentita.");
         }
         return "redirect:/timesheet";
+    }
+
+    @PostMapping("/templates")
+    public String uploadTemplate(@RequestParam("file") MultipartFile file,
+                                 @RequestParam("displayName") String displayName,
+                                 RedirectAttributes ra) {
+        try {
+            documentTemplateService.upload(file, displayName);
+            ra.addFlashAttribute("success", "Template caricato con successo.");
+        } catch (Exception e) {
+            log.warn("Template upload failed: {}", e.getMessage());
+            ra.addFlashAttribute("error", "Errore durante il caricamento: " + e.getMessage());
+        }
+        return "redirect:/templates";
+    }
+
+    @PostMapping("/templates/{id}/rename")
+    public String renameTemplate(@PathVariable Long id,
+                                 @RequestParam("displayName") String displayName,
+                                 RedirectAttributes ra) {
+        try {
+            documentTemplateService.rename(id, displayName);
+            ra.addFlashAttribute("success", "Template rinominato.");
+        } catch (Exception e) {
+            log.warn("Template rename failed for {}: {}", id, e.getMessage());
+            ra.addFlashAttribute("error", "Errore durante la rinomina.");
+        }
+        return "redirect:/templates";
+    }
+
+    @PostMapping("/templates/{id}/delete")
+    public String deleteTemplate(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+            documentTemplateService.delete(id);
+            ra.addFlashAttribute("success", "Template eliminato.");
+        } catch (Exception e) {
+            log.warn("Template delete failed for {}: {}", id, e.getMessage());
+            ra.addFlashAttribute("error", "Errore durante l'eliminazione.");
+        }
+        return "redirect:/templates";
     }
 }

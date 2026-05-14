@@ -21,6 +21,7 @@ public class SecurityConfig {
                         .requestMatchers("/webjars/**", "/css/**", "/image/**", "/js/**").permitAll()
                         .requestMatchers("/", "/login").permitAll()
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(form -> form

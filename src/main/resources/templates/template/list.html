@@ -1,12 +1,121 @@
 <!DOCTYPE html>
 <html lang="it"
       xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout/base :: layout(~{::main})}">
 <head><title>Template</title></head>
 <body>
 <main>
-    <h4 class="mb-4">Template</h4>
-    <p class="text-muted">Work in progress.</p>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Template</h4>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4" sec:authorize="hasRole('ADMIN')">
+        <div class="card-body">
+            <h6 class="card-title mb-3">Carica nuovo template</h6>
+            <form th:action="@{/admin/templates}" method="post" enctype="multipart/form-data"
+                  class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label small mb-1">Nome visualizzato</label>
+                    <input type="text" name="displayName" class="form-control form-control-sm"
+                           placeholder="es. Richiesta ferie" required style="min-width: 220px;">
+                </div>
+                <div class="col-auto">
+                    <label class="form-label small mb-1">File</label>
+                    <input type="file" name="file" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-rxt btn-sm">
+                        <i class="bi bi-upload me-1"></i>Carica
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th sec:authorize="hasRole('ADMIN')">File</th>
+                        <th class="text-end">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(templates)}">
+                        <td colspan="3" class="text-center text-muted py-4">
+                            Nessun template disponibile.
+                        </td>
+                    </tr>
+                    <tr th:each="t : ${templates}">
+                        <td class="align-middle">
+                            <!-- vista testo + matitina (admin) -->
+                            <div class="d-flex align-items-center gap-2 rename-display"
+                                 th:attr="data-id=${t.id}">
+                                <span th:text="${t.displayName}"></span>
+                                <button sec:authorize="hasRole('ADMIN')"
+                                        type="button"
+                                        class="btn btn-sm btn-link p-0 text-muted"
+                                        onclick="startRename(this)"
+                                        data-bs-toggle="tooltip" title="Rinomina">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                            <form sec:authorize="hasRole('ADMIN')"
+                                  th:action="@{/admin/templates/{id}/rename(id=${t.id})}"
+                                  method="post"
+                                  class="d-none align-items-center gap-1 rename-form">
+                                <input type="text" name="displayName" th:value="${t.displayName}"
+                                       class="form-control form-control-sm" style="min-width: 200px;" required>
+                                <button type="submit" class="btn btn-sm btn-outline-success"
+                                        data-bs-toggle="tooltip" title="Salva">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        onclick="cancelRename(this)"
+                                        data-bs-toggle="tooltip" title="Annulla">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </form>
+                        </td>
+                        <td sec:authorize="hasRole('ADMIN')" class="text-muted small align-middle"
+                            th:text="${t.filename}"></td>
+                        <td class="text-end align-middle">
+                            <a th:href="@{/templates/{id}/download(id=${t.id})}"
+                               class="btn btn-sm btn-outline-primary me-1"
+                               data-bs-toggle="tooltip" title="Scarica">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <button sec:authorize="hasRole('ADMIN')"
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmModal"
+                                    th:attr="data-confirm-action=@{/admin/templates/{id}/delete(id=${t.id})},
+                                             data-confirm-message='Vuoi eliminare il template «' + ${t.displayName} + '»? L\'operazione non potrà essere annullata.'"
+                                    title="Elimina">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
 </main>
 </body>
 </html>

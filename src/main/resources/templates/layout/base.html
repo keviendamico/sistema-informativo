@@ -13,7 +13,6 @@
 </head>
 <body>
 
-<!-- Navbar -->
 <nav class="navbar navbar-expand-lg si-navbar fixed-top">
     <div class="container-fluid px-3">
         <a class="navbar-brand" th:href="@{/timesheet}">
@@ -30,7 +29,6 @@
     </div>
 </nav>
 
-<!-- Sidebar -->
 <div class="si-sidebar">
     <nav class="si-sidebar-nav">
         <ul class="list-unstyled mb-0">
@@ -60,7 +58,6 @@
             </li>
         </ul>
 
-        <!-- Sezione Admin -->
         <div sec:authorize="hasRole('ADMIN')">
             <div class="si-sidebar-section-title">Admin</div>
             <ul class="list-unstyled mb-0">
@@ -85,16 +82,55 @@
     </nav>
 </div>
 
-<!-- Contenuto principale -->
 <main class="si-main-content">
     <div th:replace="${content}"></div>
 </main>
 
+<div class="modal fade" id="confirmModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Conferma operazione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmModalMessage" class="mb-0"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-danger" id="confirmModalProceed">Conferma</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="confirmModalForm" method="post" th:action="@{/}" style="display:none"></form>
+
 <script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/templates.js}"></script>
 <script>
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
         new bootstrap.Tooltip(el);
     });
+
+    (function () {
+        const modal = document.getElementById('confirmModal');
+        const form  = document.getElementById('confirmModalForm');
+
+        modal.addEventListener('show.bs.modal', function (event) {
+            const trigger = event.relatedTarget;
+            const action  = trigger.getAttribute('data-confirm-action');
+            const message = trigger.getAttribute('data-confirm-message')
+                || 'Sei sicuro di voler procedere? L\'operazione non potrà essere annullata.';
+
+            document.getElementById('confirmModalMessage').textContent = message;
+            form.action = action;
+        });
+
+        document.getElementById('confirmModalProceed').addEventListener('click', function () {
+            form.submit();
+        });
+    })();
 </script>
 </body>
 </html>
