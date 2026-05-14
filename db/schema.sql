@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS projects (
     id          BIGSERIAL    PRIMARY KEY,
     code        VARCHAR(50)  NOT NULL UNIQUE,
     description VARCHAR(255),
+    internal    BOOLEAN      NOT NULL DEFAULT FALSE,
+    absence     BOOLEAN      NOT NULL DEFAULT FALSE,
     active      BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMP    NOT NULL DEFAULT NOW()
@@ -50,18 +52,12 @@ CREATE TABLE IF NOT EXISTS timesheet_rows (
     hours        SMALLINT     NOT NULL DEFAULT 0 CHECK (hours >= 0 AND hours <= 24)
 );
 
-CREATE TABLE IF NOT EXISTS absence_types (
-    id          BIGSERIAL    PRIMARY KEY,
-    code        VARCHAR(10)  NOT NULL UNIQUE,
-    description VARCHAR(255) NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS timesheet_absence_rows (
-    id              BIGSERIAL PRIMARY KEY,
-    timesheet_id    BIGINT    NOT NULL REFERENCES timesheets(id) ON DELETE CASCADE,
-    day             SMALLINT  NOT NULL CHECK (day BETWEEN 1 AND 31),
-    hours           SMALLINT  CHECK (hours >= 0 AND hours <= 24),
-    absence_type_id BIGINT    REFERENCES absence_types(id),
+    id           BIGSERIAL PRIMARY KEY,
+    timesheet_id BIGINT    NOT NULL REFERENCES timesheets(id) ON DELETE CASCADE,
+    day          SMALLINT  NOT NULL CHECK (day BETWEEN 1 AND 31),
+    hours        SMALLINT  CHECK (hours >= 0 AND hours <= 24),
+    project_id   BIGINT    REFERENCES projects(id),
     UNIQUE (timesheet_id, day)
 );
 

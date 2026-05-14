@@ -45,7 +45,7 @@ public class AdminController {
     @GetMapping("/users/new")
     public String newUserForm(Model model) {
         model.addAttribute("form", new UserFormDto());
-        model.addAttribute("allProjects", projectRepository.findByActiveTrue());
+        model.addAttribute("allProjects", projectRepository.findAssignable());
         model.addAttribute("isEdit", false);
         model.addAttribute("pageTitle", "Nuovo utente");
         model.addAttribute("activePage", "admin-users");
@@ -71,7 +71,7 @@ public class AdminController {
         form.setUserId(id);
         model.addAttribute("form", form);
         model.addAttribute("userId", id);
-        model.addAttribute("allProjects", projectRepository.findByActiveTrue());
+        model.addAttribute("allProjects", projectRepository.findAssignable());
         model.addAttribute("isEdit", true);
         model.addAttribute("pageTitle", "Modifica utente");
         model.addAttribute("activePage", "admin-users");

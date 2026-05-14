@@ -82,8 +82,8 @@
                                   th:text="${h != null and h > 0 ? h : ''}"></span>
                         </td>
                         <td>
-                            <span th:if="${form.absenceRows[dayStat.index].absenceTypeId != null}"
-                                  th:text="${absenceCodeMap[form.absenceRows[dayStat.index].absenceTypeId]}"></span>
+                            <span th:if="${form.absenceRows[dayStat.index].projectId != null}"
+                                  th:text="${absenceCodeMap[form.absenceRows[dayStat.index].projectId]}"></span>
                         </td>
                         <td class="text-center">
                             <span th:with="t=${rowTotals[dayStat.index]}"

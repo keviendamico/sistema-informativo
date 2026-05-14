@@ -24,6 +24,12 @@ public class Project {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(nullable = false)
+    private boolean absence = false;
+
+    @Column(nullable = false)
+    private boolean internal = false;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -23,6 +23,6 @@ public class TimesheetAbsenceRow {
     private Integer hours;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "absence_type_id")
-    private AbsenceType absenceType;
+    @JoinColumn(name = "project_id")
+    private Project project;
 }

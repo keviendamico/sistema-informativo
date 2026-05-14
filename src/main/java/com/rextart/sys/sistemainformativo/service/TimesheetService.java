@@ -8,7 +8,6 @@ import com.rextart.sys.sistemainformativo.model.TimesheetAbsenceRow;
 import com.rextart.sys.sistemainformativo.model.TimesheetRow;
 import com.rextart.sys.sistemainformativo.model.TimesheetStatus;
 import com.rextart.sys.sistemainformativo.model.User;
-import com.rextart.sys.sistemainformativo.repository.AbsenceTypeRepository;
 import com.rextart.sys.sistemainformativo.repository.ProjectRepository;
 import com.rextart.sys.sistemainformativo.repository.TimesheetAbsenceRowRepository;
 import com.rextart.sys.sistemainformativo.repository.TimesheetRepository;
@@ -35,7 +34,6 @@ public class TimesheetService {
     private final TimesheetRowRepository timesheetRowRepository;
     private final TimesheetAbsenceRowRepository timesheetAbsenceRowRepository;
     private final ProjectRepository projectRepository;
-    private final AbsenceTypeRepository absenceTypeRepository;
     private final UserRepository userRepository;
 
     public List<Timesheet> getTimesheetsForUser(UserDetails principal) {
@@ -112,8 +110,8 @@ public class TimesheetService {
             int dayIndex = ar.getDay() - 1;
             AbsenceRowDto dto = form.getAbsenceRows().get(dayIndex);
             dto.setHours(ar.getHours());
-            if (ar.getAbsenceType() != null) {
-                dto.setAbsenceTypeId(ar.getAbsenceType().getId());
+            if (ar.getProject() != null) {
+                dto.setProjectId(ar.getProject().getId());
             }
         }
 
@@ -157,14 +155,14 @@ public class TimesheetService {
         for (int i = 0; i < absenceDtos.size(); i++) {
             AbsenceRowDto dto = absenceDtos.get(i);
             boolean hasHours = dto.getHours() != null && dto.getHours() > 0;
-            boolean hasType = dto.getAbsenceTypeId() != null;
+            boolean hasType = dto.getProjectId() != null;
             if (hasHours || hasType) {
                 TimesheetAbsenceRow ar = new TimesheetAbsenceRow();
                 ar.setTimesheet(ts);
                 ar.setDay(i + 1);
                 ar.setHours(hasHours ? dto.getHours() : null);
                 if (hasType) {
-                    ar.setAbsenceType(absenceTypeRepository.getReferenceById(dto.getAbsenceTypeId()));
+                    ar.setProject(projectRepository.getReferenceById(dto.getProjectId()));
                 }
                 absenceToSave.add(ar);
             }

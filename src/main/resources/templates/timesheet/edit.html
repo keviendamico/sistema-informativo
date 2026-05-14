@@ -87,12 +87,12 @@
                                        step="1" min="0" max="24" />
                             </td>
                             <td>
-                                <select th:field="*{absenceRows[__${dayStat.index}__].absenceTypeId}"
+                                <select th:field="*{absenceRows[__${dayStat.index}__].projectId}"
                                         class="form-select form-select-sm ts-absence-select">
                                     <option value="">—</option>
-                                    <option th:each="at : ${absenceTypes}"
-                                            th:value="${at.id}"
-                                            th:text="${at.code + ' — ' + at.description}">
+                                    <option th:each="ap : ${absenceProjects}"
+                                            th:value="${ap.id}"
+                                            th:text="${ap.code + ' — ' + ap.description}">
                                     </option>
                                 </select>
                             </td>

@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class AbsenceRowDto {
     private Integer hours;
-    private Long absenceTypeId;
+    private Long projectId;
 }

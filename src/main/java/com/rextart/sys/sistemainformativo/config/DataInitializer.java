@@ -1,9 +1,9 @@
 package com.rextart.sys.sistemainformativo.config;
 
-import com.rextart.sys.sistemainformativo.model.AbsenceType;
+import com.rextart.sys.sistemainformativo.model.Project;
 import com.rextart.sys.sistemainformativo.model.User;
 import com.rextart.sys.sistemainformativo.model.UserRole;
-import com.rextart.sys.sistemainformativo.repository.AbsenceTypeRepository;
+import com.rextart.sys.sistemainformativo.repository.ProjectRepository;
 import com.rextart.sys.sistemainformativo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,36 +22,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DataInitializer implements ApplicationRunner {
 
-    private static final List<String[]> ABSENCE_TYPES = List.of(
-            new String[]{"104",     "Legge 104"},
-            new String[]{"ALT",     "Allattamento"},
-            new String[]{"ASP",     "Aspettativa"},
-            new String[]{"CIG",     "Cassa integrazione"},
-            new String[]{"CMT",     "Congedo matrimoniale"},
-            new String[]{"CPA",     "Congedo parentale"},
-            new String[]{"FER",     "Ferie"},
-            new String[]{"INF",     "Infortunio"},
-            new String[]{"MAF",     "Maternità facoltativa al 30%"},
-            new String[]{"MAL",     "Malattia"},
-            new String[]{"MAT",     "Maternità"},
-            new String[]{"PDS",     "Permesso donazione sangue"},
-            new String[]{"PEF",     "Permesso ex-festività"},
-            new String[]{"PEL",     "Permesso elettorale"},
-            new String[]{"PGM",     "Permesso gravi motivi familiari"},
-            new String[]{"PLT",     "Permesso per lutto familiare"},
-            new String[]{"PMB",     "Permesso malattia bambino"},
-            new String[]{"PRM",     "Permesso retribuito maternità"},
-            new String[]{"PST",     "Permesso per motivi di studio"},
-            new String[]{"RCO",     "Riposo compensativo"},
-            new String[]{"ROL",     "Permesso riduzione orario di lavoro"},
-            new String[]{"SCP",     "Sciopero"},
-            new String[]{"REXCCAS", "Centro di Costo Rextart per Attività in Sede"},
-            new String[]{"REXCCFO", "Centro di Costo Rextart per Formazione del Personale"}
+    private record ProjectSeed(String code, String description, boolean absence, boolean internal) {}
+
+    private static final List<ProjectSeed> SEED_PROJECTS = List.of(
+            new ProjectSeed("104",     "Legge 104",                                             true,  false),
+            new ProjectSeed("ALT",     "Allattamento",                                          true,  false),
+            new ProjectSeed("ASP",     "Aspettativa",                                           true,  false),
+            new ProjectSeed("CIG",     "Cassa integrazione",                                    true,  false),
+            new ProjectSeed("CMT",     "Congedo matrimoniale",                                  true,  false),
+            new ProjectSeed("CPA",     "Congedo parentale",                                     true,  false),
+            new ProjectSeed("FER",     "Ferie",                                                 true,  false),
+            new ProjectSeed("INF",     "Infortunio",                                            true,  false),
+            new ProjectSeed("MAF",     "Maternità facoltativa al 30%",                          true,  false),
+            new ProjectSeed("MAL",     "Malattia",                                              true,  false),
+            new ProjectSeed("MAT",     "Maternità",                                             true,  false),
+            new ProjectSeed("PDS",     "Permesso donazione sangue",                             true,  false),
+            new ProjectSeed("PEF",     "Permesso ex-festività",                                 true,  false),
+            new ProjectSeed("PEL",     "Permesso elettorale",                                   true,  false),
+            new ProjectSeed("PGM",     "Permesso gravi motivi familiari",                       true,  false),
+            new ProjectSeed("PLT",     "Permesso per lutto familiare",                          true,  false),
+            new ProjectSeed("PMB",     "Permesso malattia bambino",                             true,  false),
+            new ProjectSeed("PRM",     "Permesso retribuito maternità",                         true,  false),
+            new ProjectSeed("PST",     "Permesso per motivi di studio",                         true,  false),
+            new ProjectSeed("RCO",     "Riposo compensativo",                                   true,  false),
+            new ProjectSeed("ROL",     "Permesso riduzione orario di lavoro",                   true,  false),
+            new ProjectSeed("SCP",     "Sciopero",                                              true,  false),
+            new ProjectSeed("REXCCAS", "Centro di Costo Rextart per Attività in Sede",         true,  true),
+            new ProjectSeed("REXCCFO", "Centro di Costo Rextart per Formazione del Personale", true,  true)
     );
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AbsenceTypeRepository absenceTypeRepository;
+    private final ProjectRepository projectRepository;
 
     @Value("${password.admin}")
     private String password;
@@ -59,7 +61,7 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(@NonNull ApplicationArguments args) {
         seedAdminUser();
-        seedAbsenceTypes();
+        seedProjects();
     }
 
     private void seedAdminUser() {
@@ -77,19 +79,22 @@ public class DataInitializer implements ApplicationRunner {
         }
     }
 
-    private void seedAbsenceTypes() {
+    private void seedProjects() {
         int inserted = 0;
-        for (String[] entry : ABSENCE_TYPES) {
-            if (!absenceTypeRepository.existsByCode(entry[0])) {
-                AbsenceType at = new AbsenceType();
-                at.setCode(entry[0]);
-                at.setDescription(entry[1]);
-                absenceTypeRepository.save(at);
+        for (ProjectSeed seed : SEED_PROJECTS) {
+            if (!projectRepository.existsByCode(seed.code())) {
+                Project p = new Project();
+                p.setCode(seed.code());
+                p.setDescription(seed.description());
+                p.setAbsence(seed.absence());
+                p.setInternal(seed.internal());
+                p.setActive(true);
+                projectRepository.save(p);
                 inserted++;
             }
         }
         if (inserted > 0) {
-            log.info("DataInitializer: inserted {} absence types", inserted);
+            log.info("DataInitializer: inserted {} projects", inserted);
         }
     }
 }

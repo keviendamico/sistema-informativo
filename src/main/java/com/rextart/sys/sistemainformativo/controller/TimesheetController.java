@@ -1,11 +1,11 @@
 package com.rextart.sys.sistemainformativo.controller;
 
 import com.rextart.sys.sistemainformativo.model.DayType;
+import com.rextart.sys.sistemainformativo.model.Project;
 import com.rextart.sys.sistemainformativo.model.Timesheet;
 import com.rextart.sys.sistemainformativo.model.TimesheetStatus;
 import com.rextart.sys.sistemainformativo.model.dto.ProjectColumnDto;
 import com.rextart.sys.sistemainformativo.model.dto.TimesheetFormDto;
-import com.rextart.sys.sistemainformativo.repository.AbsenceTypeRepository;
 import com.rextart.sys.sistemainformativo.repository.ProjectRepository;
 import com.rextart.sys.sistemainformativo.service.TimesheetPdfService;
 import com.rextart.sys.sistemainformativo.service.TimesheetService;
@@ -30,8 +30,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -43,7 +45,6 @@ public class TimesheetController {
     private final TimesheetService timesheetService;
     private final TimesheetPdfService timesheetPdfService;
     private final ProjectRepository projectRepository;
-    private final AbsenceTypeRepository absenceTypeRepository;
 
     @GetMapping
     public String list(Model model, @AuthenticationPrincipal UserDetails principal) {
@@ -90,11 +91,16 @@ public class TimesheetController {
 
         YearMonth ym = YearMonth.of(ts.getYear(), ts.getMonth());
 
+        List<Project> userProjects = ts.getUser().getProjects().stream()
+                .filter(Project::isActive)
+                .sorted(Comparator.comparing(Project::getCode))
+                .toList();
+
         model.addAttribute("timesheet", ts);
         model.addAttribute("form", form);
         model.addAttribute("rowClassList", buildRowClassList(ts.getYear(), ts.getMonth(), ym.lengthOfMonth()));
-        model.addAttribute("projects", projectRepository.findByActiveTrue());
-        model.addAttribute("absenceTypes", absenceTypeRepository.findAllByOrderByCodeAsc());
+        model.addAttribute("projects", userProjects);
+        model.addAttribute("absenceProjects", projectRepository.findByAbsenceTrueAndActiveTrueOrderByCodeAsc());
         model.addAttribute("daysInMonth", ym.lengthOfMonth());
         model.addAttribute("pageTitle", "Modifica Timesheet");
         model.addAttribute("activePage", "timesheet");
@@ -144,16 +150,16 @@ public class TimesheetController {
         List<String> columnCodes = activeColumns.stream()
                 .map(c -> c.getProjectId() == null ? "—"
                         : projectRepository.findById(c.getProjectId())
-                                .map(p -> p.getCode())
+                                .map(Project::getCode)
                                 .orElse("?"))
                 .toList();
 
-        Map<Long, String> absenceCodeMap = absenceTypeRepository.findAllByOrderByCodeAsc().stream()
-                .collect(Collectors.toMap(at -> at.getId(), at -> at.getCode()));
+        Map<Long, String> absenceCodeMap = projectRepository.findByAbsenceTrueAndActiveTrueOrderByCodeAsc().stream()
+                .collect(Collectors.toMap(Project::getId, Project::getCode));
 
         List<Integer> columnTotals = activeColumns.stream()
                 .map(c -> c.getHours().stream()
-                        .filter(h -> h != null)
+                        .filter(Objects::nonNull)
                         .mapToInt(Integer::intValue)
                         .sum())
                 .toList();

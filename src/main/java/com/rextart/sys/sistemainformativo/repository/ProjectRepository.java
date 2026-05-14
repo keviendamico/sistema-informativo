@@ -2,6 +2,7 @@ package com.rextart.sys.sistemainformativo.repository;
 
 import com.rextart.sys.sistemainformativo.model.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -9,5 +10,15 @@ import java.util.List;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
-    List<Project> findByActiveTrue();
+    boolean existsByCode(String code);
+
+    // Absence dropdown in timesheet (absence=true, includes REXCCAS/REXCCFO)
+    List<Project> findByAbsenceTrueAndActiveTrueOrderByCodeAsc();
+
+    // Expense report project dropdown (internal=true)
+    List<Project> findByInternalTrueAndActiveTrueOrderByCodeAsc();
+
+    // User form multiselect: exclude pure absence types (absence=true AND internal=false)
+    @Query("SELECT p FROM Project p WHERE p.active = true AND NOT (p.absence = true AND p.internal = false) ORDER BY p.code ASC")
+    List<Project> findAssignable();
 }
